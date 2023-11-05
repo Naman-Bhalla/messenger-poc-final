@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WebSocket Test Page</title>
+  <script src="https://cdn.jsdelivr.net/sockjs/1.1.4/sockjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>
+<h2>WebSocket Test Page</h2>
+<form id="connect-form">
+  <button type="button" id="connect">Connect</button>
+  <button type="button" id="disconnect" disabled="disabled">Disconnect</button>
+</form>
+
+<form id="message-form">
+  <input type="text" id="message-input" placeholder="Enter your message here"/>
+  <button type="button" id="send-message">Send</button>
+</form>
+
+<div id="message-area">
+  <h3>Messages</h3>
+  <ul id="message-list"></ul>
+</div>
+
+<script type="text/javascript">
+  var stompClient = null;
+
+  function setConnected(connected) {
+    document.querySelector("#connect").disabled = connected;
+    document.querySelector("#disconnect").disabled = !connected;
+    document.querySelector("#message-area").style.visibility = connected ? 'visible' : 'hidden';
+    document.querySelector("#message-list").innerHTML = '';
+  }
+
+  function connect() {
+    var socket = new SockJS('http://localhost:9000/ws');
+    stompClient = Stomp.over(socket);
+    stompClient.connect("naman", "password", function(frame) {
+      setConnected(true);
+      console.log('Connected: ' + frame);
+      stompClient.subscribe('/topic/messages', function(messageOutput) {
+        showMessageOutput(JSON.parse(messageOutput.body).content);
+      });
+    });
+  }
+
+  function disconnect() {
+    if (stompClient !== null) {
+      stompClient.disconnect();
+    }
+    setConnected(false);
+    console.log("Disconnected");
+  }
+
+  function sendMessage() {
+    var messageContent = document.querySelector("#message-input").value.trim();
+    if(messageContent && stompClient) {
+      var chatMessage = {
+        from: "aman",
+        text: messageContent,
+        type: 'CHAT'
+      };
+      stompClient.send("/app/chat.private.1234", {}, JSON.stringify(chatMessage));
+      document.querySelector("#message-input").value = '';
+    }
+  }
+
+  function showMessageOutput(messageOutput) {
+    var messageList = document.querySelector("#message-list");
+    var messageElement = document.createElement('li');
+    messageElement.appendChild(document.createTextNode(messageOutput));
+    messageList.appendChild(messageElement);
+    messageList.scrollTop = messageList.scrollHeight;
+  }
+
+  document.querySelector("#connect").addEventListener('click', connect);
+  document.querySelector("#disconnect").addEventListener('click', disconnect);
+  document.querySelector("#send-message").addEventListener('click', sendMessage);
+</script>
+</body>
+</html>
