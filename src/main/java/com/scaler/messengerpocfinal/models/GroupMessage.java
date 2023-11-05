@@ -6,7 +6,7 @@ public class GroupMessage extends ChatMessage {
 
     // Constructors, getters, and setters...
     public GroupMessage(String groupName, ChatMessage chatMessage) {
-        super(chatMessage.getFrom(), chatMessage.getText());
+//        super(chatMessage.getFrom(), chatMessage.getText());
         this.groupName = groupName;
     }
 
